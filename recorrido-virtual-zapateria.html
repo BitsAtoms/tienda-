@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Simulacion HTML de una tienda virtual de sneakers con escena 3D editable y panel de propiedades.">
+    <title>Tienda Virtual - Simulacion 3D Editable</title>
+    <style>
+        :root {
+            --fondo: #071015;
+            --fondo-2: #0e171c;
+            --panel: rgba(7, 13, 17, 0.82);
+            --borde: rgba(154, 243, 204, 0.16);
+            --texto: #eef8f3;
+            --texto-suave: #98aea6;
+            --acento: #7ef0c0;
+            --cyan: #74cfff;
+            --rosa: #ff5eb4;
+            --oro: #f6d36f;
+            --sombra: 0 24px 60px rgba(0, 0, 0, 0.35);
+            --radio: 22px;
+            --alto-header: 92px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: var(--texto);
+            background:
+                radial-gradient(circle at top left, rgba(75, 215, 161, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(116, 207, 255, 0.12), transparent 28%),
+                linear-gradient(135deg, #050b0f 0%, #081117 40%, #0e1a20 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 32px 32px;
+            opacity: 0.28;
+            pointer-events: none;
+        }
+
+        #app {
+            position: fixed;
+            inset: 0;
+        }
+
+        #scene3d {
+            position: absolute;
+            inset: 0;
+        }
+
+        .topbar {
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 20;
+            min-height: var(--alto-header);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 22px;
+            background: rgba(6, 12, 16, 0.78);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .brand__badge {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 16px;
+            color: #071015;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            background: linear-gradient(135deg, #d5fff0 0%, #79ecc0 100%);
+            box-shadow: 0 14px 30px rgba(75, 215, 161, 0.25);
+        }
+
+        .brand__title {
+            margin: 0;
+            font-size: 1.08rem;
+        }
+
+        .brand__subtitle {
+            margin: 4px 0 0;
+            color: var(--texto-suave);
+            font-size: 0.93rem;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .actions button,
+        .inspector button,
+        .inspector input,
+        .inspector select,
+        .inspector textarea,
+        .mobile-controls button {
+            font: inherit;
+        }
+
+        .actions button,
+        .inspector button {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--texto);
+            padding: 10px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .actions button:hover,
+        .actions button:focus-visible,
+        .inspector button:hover,
+        .inspector button:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(126, 240, 192, 0.35);
+            background: rgba(126, 240, 192, 0.1);
+            outline: none;
+        }
+
+        .actions button.is-active,
+        .inspector button.principal {
+            color: #071015;
+            background: linear-gradient(135deg, #d5fff0 0%, #79ecc0 100%);
+            border-color: transparent;
+            box-shadow: 0 10px 24px rgba(75, 215, 161, 0.22);
+        }
+
+        .overlay {
+            position: fixed;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .panel {
+            pointer-events: auto;
+            border: 1px solid var(--borde);
+            border-radius: var(--radio);
+            background: var(--panel);
+            backdrop-filter: blur(14px);
+            box-shadow: var(--sombra);
+        }
+
+        .hud {
+            top: calc(var(--alto-header) + 16px);
+            left: 16px;
+            width: min(340px, calc(100vw - 32px));
+            padding: 16px;
+        }
+
+        .hud h2,
+        .inspector h2 {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .hud p,
+        .inspector__hint {
+            color: var(--texto-suave);
+            line-height: 1.55;
+            font-size: 0.9rem;
+        }
+
+        .metrics {
+            display: grid;
+            gap: 10px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .metric span {
+            color: var(--texto-suave);
+            font-size: 0.9rem;
+        }
+
+        .metric strong {
+            color: var(--acento);
+        }
+
+        .inspector {
+            right: 16px;
+            top: calc(var(--alto-header) + 16px);
+            width: min(360px, calc(100vw - 32px));
+            padding: 16px;
+        }
+
+        .inspector__grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .inspector__meta {
+            display: grid;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .inspector__row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .inspector__row span {
+            color: var(--texto-suave);
+        }
+
+        .inspector__row strong {
+            color: var(--texto);
+            text-align: right;
+        }
+
+        .inspector label {
+            display: grid;
+            gap: 6px;
+            font-size: 0.9rem;
+            color: var(--texto);
+        }
+
+        .inspector input,
+        .inspector select,
+        .inspector textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--texto);
+            border-radius: 14px;
+            padding: 10px 12px;
+            outline: none;
+        }
+
+        .inspector textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .inspector__actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mobile-controls {
+            position: fixed;
+            left: 16px;
+            bottom: 16px;
+            z-index: 15;
+            display: none;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .mobile-pad,
+        .mobile-turn {
+            display: grid;
+            gap: 10px;
+        }
+
+        .mobile-pad {
+            grid-template-columns: repeat(3, 56px);
+            grid-template-rows: repeat(3, 56px);
+        }
+
+        .mobile-turn {
+            grid-template-columns: repeat(2, 56px);
+        }
+
+        .mobile-controls button {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(7, 13, 17, 0.84);
+            color: var(--texto);
+            border-radius: 18px;
+            backdrop-filter: blur(12px);
+        }
+
+        .mobile-controls .empty {
+            visibility: hidden;
+        }
+
+        .crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 12;
+            width: 18px;
+            height: 18px;
+            margin-left: -9px;
+            margin-top: -9px;
+            pointer-events: none;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: "";
+            position: absolute;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 2px;
+        }
+
+        .crosshair::before {
+            left: 8px;
+            top: 0;
+            width: 2px;
+            height: 18px;
+        }
+
+        .crosshair::after {
+            top: 8px;
+            left: 0;
+            width: 18px;
+            height: 2px;
+        }
+
+        @media (max-width: 1180px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .inspector {
+                top: auto;
+                bottom: 210px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            :root {
+                --alto-header: 146px;
+            }
+
+            .hud,
+            .inspector {
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+
+            .hud {
+                top: calc(var(--alto-header) + 12px);
+            }
+
+            .inspector {
+                top: auto;
+                bottom: 228px;
+            }
+
+            .mobile-controls {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand__badge">3D</div>
+                <div>
+                    <h1 class="brand__title">Simulacion HTML de la tienda virtual</h1>
+                    <p class="brand__subtitle">Ahora la escena reproduce mejor los muros, las pantallas y las zapatillas segun las fotos de referencia.</p>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" data-jump="entrada">Entrada</button>
+                <button type="button" data-jump="muro-izquierdo">Muro izquierdo</button>
+                <button type="button" data-jump="muro-derecho">Muro derecho</button>
+                <button type="button" data-jump="premium">Zona premium</button>
+                <button type="button" id="toggleEdit" class="is-active">Modo edicion: activado</button>
+                <button type="button" id="resetView">Centrar vista</button>
+            </div>
+        </header>
+
+        <div id="scene3d" aria-label="Simulacion 3D de la tienda"></div>
+        <div class="crosshair" aria-hidden="true"></div>
+
+        <aside class="overlay hud panel">
+            <h2>Resumen del espacio</h2>
+            <p>
+                La escena mantiene todos los textos en espanol y usa las fotos solo como referencia para modelar mejor el muro de entrada, los paneles negros, la pantalla vertical, el mosaico de pantallas y los expositores de zapatillas.
+            </p>
+            <div class="metrics">
+                <div class="metric"><span>Largo simulado</span><strong>20,0 m</strong></div>
+                <div class="metric"><span>Ancho simulado</span><strong>3,5 m</strong></div>
+                <div class="metric"><span>Altura simulada</span><strong>3,0 m</strong></div>
+                <div class="metric"><span>Navegacion</span><strong>ZQSD / WASD + raton</strong></div>
+                <div class="metric"><span>Modo edicion</span><strong id="editStatus">Activado</strong></div>
+                <div class="metric"><span>Seleccion actual</span><strong id="selectedShort">Ninguna</strong></div>
+            </div>
+        </aside>
+
+        <aside class="overlay inspector panel">
+            <h2>Propiedades del objeto</h2>
+            <p class="inspector__hint">Selecciona una pantalla, una imagen, una zapatilla o un mueble para editar su nombre y su tipo.</p>
+            <div class="inspector__grid">
+                <div class="inspector__meta">
+                    <div class="inspector__row"><span>Objeto</span><strong id="propNombreVista">Ninguno</strong></div>
+                    <div class="inspector__row"><span>Tipo</span><strong id="propTipoVista">-</strong></div>
+                    <div class="inspector__row"><span>Zona</span><strong id="propZonaVista">-</strong></div>
+                    <div class="inspector__row"><span>Posicion</span><strong id="propPosVista">-</strong></div>
+                </div>
+
+                <label>
+                    Nombre personalizado
+                    <input id="propNombre" type="text" placeholder="Ejemplo: Pantalla 1 o Basket Spider">
+                </label>
+
+                <label>
+                    Tipo de elemento
+                    <select id="propTipo">
+                        <option value="pantalla">Pantalla</option>
+                        <option value="imagen">Imagen</option>
+                        <option value="zapatilla">Zapatilla</option>
+                        <option value="mueble">Mueble</option>
+                        <option value="decoracion">Decoracion</option>
+                    </select>
+                </label>
+
+                <label>
+                    Nota o descripcion
+                    <textarea id="propNota" placeholder="Ejemplo: Pantalla principal del muro derecho"></textarea>
+                </label>
+
+                <div class="inspector__meta">
+                    <div class="inspector__row"><span>Muro activo</span><strong id="buildWallStatus">Muro derecho</strong></div>
+                    <div class="inspector__row"><span>Construccion manual</span><strong>Añadir o borrar objetos</strong></div>
+                </div>
+
+                <label>
+                    Muro o zona de destino
+                    <select id="buildWall">
+                        <option value="muro-derecho">Muro derecho</option>
+                        <option value="muro-izquierdo">Muro izquierdo</option>
+                        <option value="premium">Zona premium</option>
+                    </select>
+                </label>
+
+                <label>
+                    Elemento a crear
+                    <select id="buildType">
+                        <option value="pantalla">Pantalla</option>
+                        <option value="imagen">Imagen</option>
+                        <option value="zapatilla">Zapatilla</option>
+                        <option value="balda">Balda</option>
+                        <option value="decoracion">Decoracion</option>
+                    </select>
+                </label>
+
+                <div class="inspector__actions">
+                    <button id="saveProps" class="principal" type="button">Guardar propiedades</button>
+                    <button id="resetProps" type="button">Restaurar</button>
+                </div>
+                <div class="inspector__actions">
+                    <button id="createObject" class="principal" type="button">Crear elemento</button>
+                    <button id="deleteObject" type="button">Eliminar seleccionado</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="mobile-controls" aria-label="Controles tactiles">
+            <div class="mobile-pad">
+                <button class="empty" type="button">.</button>
+                <button type="button" data-hold="forward">AV</button>
+                <button class="empty" type="button">.</button>
+                <button type="button" data-hold="left">IZ</button>
+                <button type="button" data-hold="backward">AT</button>
+                <button type="button" data-hold="right">DE</button>
+                <button class="empty" type="button">.</button>
+                <button class="empty" type="button">.</button>
+                <button class="empty" type="button">.</button>
+            </div>
+            <div class="mobile-turn">
+                <button type="button" data-hold="turn-left">GI</button>
+                <button type="button" data-hold="turn-right">GD</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from "https://unpkg.com/three@0.164.1/build/three.module.js";
+
+        const dimensiones = {
+            ancho: 3.5,
+            largo: 20,
+            alto: 3
+        };
+
+        const contenedor = document.getElementById("scene3d");
+        const editStatus = document.getElementById("editStatus");
+        const selectedShort = document.getElementById("selectedShort");
+        const toggleEditButton = document.getElementById("toggleEdit");
+        const propNombreVista = document.getElementById("propNombreVista");
+        const propTipoVista = document.getElementById("propTipoVista");
+        const propZonaVista = document.getElementById("propZonaVista");
+        const propPosVista = document.getElementById("propPosVista");
+        const propNombre = document.getElementById("propNombre");
+        const propTipo = document.getElementById("propTipo");
+        const propNota = document.getElementById("propNota");
+        const saveProps = document.getElementById("saveProps");
+        const resetProps = document.getElementById("resetProps");
+        const buildWallStatus = document.getElementById("buildWallStatus");
+        const buildWall = document.getElementById("buildWall");
+        const buildType = document.getElementById("buildType");
+        const createObject = document.getElementById("createObject");
+        const deleteObject = document.getElementById("deleteObject");
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x061015);
+        scene.fog = new THREE.Fog(0x061015, 9, 34);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 150);
+        camera.position.set(0, 1.68, 8.6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        contenedor.appendChild(renderer.domElement);
+
+        const store = new THREE.Group();
+        scene.add(store);
+
+        const halfWidth = dimensiones.ancho / 2;
+        const halfLength = dimensiones.largo / 2;
+
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const dragPoint = new THREE.Vector3();
+        const dragOffset = new THREE.Vector3();
+
+        const selectableRoots = [];
+        const draggableRoots = [];
+        const propertyStore = JSON.parse(localStorage.getItem("tiendaVirtualPropiedades") || "{}");
+        const wallTargets = {};
+        const input = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            turnLeft: false,
+            turnRight: false
+        };
+
+        let selectedObject = null;
+        let yaw = Math.PI;
+        let pitch = 0;
+        let editMode = true;
+        let isDraggingView = false;
+        let isDraggingObject = false;
+        let draggedRoot = null;
+        let lastX = 0;
+        let lastY = 0;
+        let uidCounter = 0;
+        let selectedWallId = "muro-derecho";
+
+        const matMetal = new THREE.MeshStandardMaterial({
+            color: 0x68747c,
+            metalness: 0.84,
+            roughness: 0.38
+        });
+
+        const matMetalOscuro = new THREE.MeshStandardMaterial({
+            color: 0x1b2429,
+            metalness: 0.54,
+            roughness: 0.62
+        });
+
+        const matNegro = new THREE.MeshStandardMaterial({
+            color: 0x101417,
+            metalness: 0.34,
+            roughness: 0.82
+        });
+
+        const matSuelo = new THREE.MeshStandardMaterial({
+            color: 0x4a5258,
+            metalness: 0.12,
+            roughness: 0.82
+        });
+
+        const matTecho = new THREE.MeshStandardMaterial({
+            color: 0x66737b,
+            metalness: 0.6,
+            roughness: 0.38
+        });
+
+        function crearTexturaPantalla(colorA, colorB, colorC) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grad.addColorStop(0, colorA);
+            grad.addColorStop(0.55, colorB);
+            grad.addColorStop(1, colorC);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 7; i += 1) {
+                ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.16)";
+                ctx.fillRect(20 + i * 65, 18 + (i % 3) * 22, 44, 180);
+            }
+
+            ctx.fillStyle = "rgba(255,255,255,0.22)";
+            ctx.fillRect(26, 190, 170, 16);
+            ctx.fillStyle = "rgba(255,255,255,0.12)";
+            ctx.fillRect(210, 190, 130, 16);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return texture;
+        }
+
+        function crearTexturaPoster(colorBase, colorGlow) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 960;
+            const ctx = canvas.getContext("2d");
+
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, colorBase);
+            grad.addColorStop(1, "#081015");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = colorGlow;
+            ctx.beginPath();
+            ctx.arc(320, 340, 170, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "rgba(0,0,0,0.75)";
+            ctx.fillRect(250, 310, 140, 220);
+
+            ctx.fillStyle = "rgba(255,255,255,0.55)";
+            ctx.beginPath();
+            ctx.arc(320, 230, 90, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "rgba(255,255,255,0.12)";
+            ctx.fillRect(200, 600, 240, 80);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return texture;
+        }
+
+        function crearTexturaVertical(colorA, colorB) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 420;
+            canvas.height = 900;
+            const ctx = canvas.getContext("2d");
+
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grad.addColorStop(0, "#0c1116");
+            grad.addColorStop(0.4, colorA);
+            grad.addColorStop(1, colorB);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "rgba(255,255,255,0.65)";
+            ctx.beginPath();
+            ctx.arc(210, 250, 110, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "rgba(255,255,255,0.16)";
+            ctx.fillRect(120, 390, 180, 230);
+            ctx.fillRect(90, 650, 240, 90);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return texture;
+        }
+
+        function makeCorrugatedWall(width, height, depth, ribs = 38) {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), matMetal);
+            group.add(base);
+
+            for (let i = 0; i < ribs; i += 1) {
+                const rib = new THREE.Mesh(
+                    new THREE.BoxGeometry(width, height, depth / 7),
+                    matMetalOscuro
+                );
+                const z = -depth / 2 + (i / (ribs - 1)) * depth;
+                rib.position.set(0, 0, z);
+                group.add(rib);
+            }
+
+            return group;
+        }
+
+        function marcarSeleccionableEnJerarquia(root, targetRoot) {
+            root.traverse((child) => {
+                child.userData.selectRoot = targetRoot;
+            });
+        }
+
+        function registrarSeleccionable(root, meta) {
+            uidCounter += 1;
+            const uid = meta.uid || `obj-${uidCounter}`;
+            root.userData.uid = uid;
+            root.userData.meta = {
+                nombre: meta.nombre,
+                tipo: meta.tipo,
+                zona: meta.zona,
+                nota: meta.nota || ""
+            };
+            root.userData.originalMeta = { ...root.userData.meta };
+            root.userData.deletable = meta.deletable ?? true;
+            root.userData.wallTargetId = meta.wallTargetId || null;
+            root.userData.isWallTarget = meta.isWallTarget || false;
+
+            if (propertyStore[uid]) {
+                root.userData.meta = { ...root.userData.meta, ...propertyStore[uid] };
+            }
+
+            selectableRoots.push(root);
+            marcarSeleccionableEnJerarquia(root, root);
+            return root;
+        }
+
+        function registrarMovible(root) {
+            root.userData.isDraggable = true;
+            root.userData.baseY = root.position.y;
+            draggableRoots.push(root);
+        }
+
+        function registrarMuroEditable(id, nombre, group, config) {
+            wallTargets[id] = {
+                id,
+                nombre,
+                group,
+                config,
+                counters: {
+                    pantalla: 0,
+                    imagen: 0,
+                    zapatilla: 0,
+                    balda: 0,
+                    decoracion: 0
+                }
+            };
+            group.userData.wallTargetId = id;
+            group.userData.isWallTarget = true;
+            group.userData.deletable = false;
+        }
+
+        function crearZapatoMesh(colorPrincipal = 0x7ef0c0) {
+            const zapato = new THREE.Group();
+
+            const suela = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.045, 0.13),
+                new THREE.MeshStandardMaterial({
+                    color: 0xf0f3ef,
+                    roughness: 0.58,
+                    metalness: 0.06
+                })
+            );
+            suela.scale.z = 1.06;
+
+            const cuerpo = new THREE.Mesh(
+                new THREE.BoxGeometry(0.24, 0.085, 0.115),
+                new THREE.MeshStandardMaterial({
+                    color: colorPrincipal,
+                    roughness: 0.34,
+                    metalness: 0.16
+                })
+            );
+            cuerpo.position.set(0.02, 0.055, 0);
+
+            const talon = new THREE.Mesh(
+                new THREE.BoxGeometry(0.05, 0.05, 0.11),
+                new THREE.MeshStandardMaterial({
+                    color: 0x242a2f,
+                    roughness: 0.6,
+                    metalness: 0.12
+                })
+            );
+            talon.position.set(-0.11, 0.055, 0);
+
+            const puntera = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06, 0.055, 0.105),
+                new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(colorPrincipal).offsetHSL(0, 0, 0.08),
+                    roughness: 0.3,
+                    metalness: 0.16
+                })
+            );
+            puntera.position.set(0.12, 0.055, 0);
+
+            const franja = new THREE.Mesh(
+                new THREE.BoxGeometry(0.11, 0.02, 0.02),
+                new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    roughness: 0.38,
+                    metalness: 0.08
+                })
+            );
+            franja.position.set(0.02, 0.07, 0.055);
+
+            const franja2 = franja.clone();
+            franja2.position.z = -0.055;
+
+            zapato.add(suela, cuerpo, talon, puntera, franja, franja2);
+            return zapato;
+        }
+
+        function crearZapatillaSelectable(parent, x, y, z, rotY, color, meta) {
+            const zapato = crearZapatoMesh(color);
+            zapato.position.set(x, y, z);
+            zapato.rotation.y = rotY;
+            parent.add(zapato);
+            registrarSeleccionable(zapato, meta);
+            return zapato;
+        }
+
+        function crearPantalla(parent, width, height, texture, emissiveColor, x, y, z, rotY, meta) {
+            const root = new THREE.Group();
+
+            const marco = new THREE.Mesh(
+                new THREE.BoxGeometry(width + 0.06, height + 0.06, 0.06),
+                new THREE.MeshStandardMaterial({
+                    color: 0x090c0f,
+                    metalness: 0.35,
+                    roughness: 0.7
+                })
+            );
+
+            const panel = new THREE.Mesh(
+                new THREE.BoxGeometry(width, height, 0.025),
+                new THREE.MeshStandardMaterial({
+                    map: texture,
+                    emissive: new THREE.Color(emissiveColor),
+                    emissiveIntensity: 1.05,
+                    metalness: 0.15,
+                    roughness: 0.26
+                })
+            );
+            panel.position.z = 0.02;
+
+            const glow = new THREE.Mesh(
+                new THREE.BoxGeometry(width + 0.01, height + 0.01, 0.01),
+                new THREE.MeshStandardMaterial({
+                    color: emissiveColor,
+                    emissive: new THREE.Color(emissiveColor),
+                    emissiveIntensity: 0.45,
+                    transparent: true,
+                    opacity: 0.18
+                })
+            );
+            glow.position.z = 0.045;
+
+            root.add(marco, panel, glow);
+            root.position.set(x, y, z);
+            root.rotation.y = rotY;
+            parent.add(root);
+            registrarSeleccionable(root, meta);
+            return root;
+        }
+
+        function crearPanelNegro(parent, width, height, x, y, z, rotY) {
+            const panel = new THREE.Mesh(
+                new THREE.BoxGeometry(width, height, 0.12),
+                matNegro
+            );
+            panel.position.set(x, y, z);
+            panel.rotation.y = rotY;
+            parent.add(panel);
+            return panel;
+        }
+
+        function crearBaldaSelectable(parent, x, y, z, rotY, meta) {
+            const balda = new THREE.Mesh(
+                new THREE.BoxGeometry(0.42, 0.05, 0.24),
+                new THREE.MeshStandardMaterial({
+                    color: 0x13181c,
+                    roughness: 0.58,
+                    metalness: 0.24
+                })
+            );
+            balda.position.set(x, y, z);
+            balda.rotation.y = rotY;
+            parent.add(balda);
+            registrarSeleccionable(balda, meta);
+            return balda;
+        }
+
+        function crearDecoracionSelectable(parent, x, y, z, meta) {
+            const deco = new THREE.Group();
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(0.16, 0.16, 0.16),
+                new THREE.MeshStandardMaterial({
+                    color: 0x2c3238,
+                    roughness: 0.48,
+                    metalness: 0.26
+                })
+            );
+            const cabeza = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 18, 18),
+                new THREE.MeshStandardMaterial({
+                    color: 0xf0f0ea,
+                    roughness: 0.52,
+                    metalness: 0.04
+                })
+            );
+            cabeza.position.y = 0.14;
+            deco.add(base, cabeza);
+            deco.position.set(x, y, z);
+            parent.add(deco);
+            registrarSeleccionable(deco, meta);
+            return deco;
+        }
+
+        function agregarSueloYTecho() {
+            const suelo = new THREE.Mesh(
+                new THREE.BoxGeometry(dimensiones.ancho, 0.08, dimensiones.largo),
+                matSuelo
+            );
+            suelo.position.set(0, -0.04, 0);
+            suelo.receiveShadow = true;
+            store.add(suelo);
+
+            const techo = new THREE.Mesh(
+                new THREE.BoxGeometry(dimensiones.ancho, 0.06, dimensiones.largo),
+                matTecho
+            );
+            techo.position.set(0, dimensiones.alto, 0);
+            store.add(techo);
+        }
+
+        function agregarMuros() {
+            const muroIzquierdo = makeCorrugatedWall(0.08, dimensiones.alto, dimensiones.largo, 44);
+            muroIzquierdo.position.set(-halfWidth, dimensiones.alto / 2, 0);
+            muroIzquierdo.rotation.y = Math.PI / 2;
+            store.add(muroIzquierdo);
+
+            const muroDerecho = makeCorrugatedWall(0.08, dimensiones.alto, dimensiones.largo, 44);
+            muroDerecho.position.set(halfWidth, dimensiones.alto / 2, 0);
+            muroDerecho.rotation.y = Math.PI / 2;
+            store.add(muroDerecho);
+
+            const muroFondo = makeCorrugatedWall(dimensiones.ancho, dimensiones.alto, 0.08, 24);
+            muroFondo.position.set(0, dimensiones.alto / 2, -halfLength);
+            store.add(muroFondo);
+
+            const marcoEntrada = makeCorrugatedWall(dimensiones.ancho, dimensiones.alto, 0.08, 24);
+            marcoEntrada.position.set(0, dimensiones.alto / 2, halfLength);
+            store.add(marcoEntrada);
+        }
+
+        function agregarPuertaEntrada() {
+            const puerta = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 2.4, 0.05),
+                new THREE.MeshStandardMaterial({
+                    color: 0x10262a,
+                    emissive: 0x113d39,
+                    emissiveIntensity: 0.45,
+                    metalness: 0.2,
+                    roughness: 0.6
+                })
+            );
+            puerta.position.set(-0.15, 1.2, halfLength - 0.04);
+            store.add(puerta);
+
+            const cartelSuperior = new THREE.Mesh(
+                new THREE.BoxGeometry(1.7, 0.26, 0.05),
+                new THREE.MeshStandardMaterial({
+                    color: 0x101417,
+                    emissive: 0x0f2420,
+                    emissiveIntensity: 0.3
+                })
+            );
+            cartelSuperior.position.set(-0.15, 2.55, halfLength - 0.02);
+            store.add(cartelSuperior);
+
+            const lineaSuelo = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.015, 0.06),
+                new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    emissive: 0xffffff,
+                    emissiveIntensity: 0.8
+                })
+            );
+            lineaSuelo.position.set(-0.15, 0.01, halfLength - 0.03);
+            store.add(lineaSuelo);
+        }
+
+        function agregarIluminacion() {
+            const ambiental = new THREE.AmbientLight(0xd2f7ff, 0.52);
+            scene.add(ambiental);
+
+            const principal = new THREE.DirectionalLight(0xffffff, 0.7);
+            principal.position.set(2, 4, 6);
+            principal.castShadow = true;
+            principal.shadow.mapSize.width = 1024;
+            principal.shadow.mapSize.height = 1024;
+            scene.add(principal);
+
+            const neonVerde = new THREE.PointLight(0x49f5ba, 12, 20, 2);
+            neonVerde.position.set(0.8, 2.1, 7.4);
+            scene.add(neonVerde);
+
+            const neonCian = new THREE.PointLight(0x63cfff, 8, 22, 2);
+            neonCian.position.set(-0.8, 2.5, 1.0);
+            scene.add(neonCian);
+
+            const neonRosa = new THREE.PointLight(0xff5eb4, 4, 8, 2);
+            neonRosa.position.set(1.1, 0.3, 7.0);
+            scene.add(neonRosa);
+
+            const tira = new THREE.Mesh(
+                new THREE.BoxGeometry(0.03, 0.03, dimensiones.largo - 2.4),
+                new THREE.MeshStandardMaterial({
+                    color: 0x74cfff,
+                    emissive: 0x74cfff,
+                    emissiveIntensity: 1.15
+                })
+            );
+            tira.position.set(-0.55, dimensiones.alto - 0.08, 0.3);
+            store.add(tira);
+        }
+
+        function agregarMuroIzquierdo() {
+            const panelLargo = new THREE.Group();
+            panelLargo.position.set(-1.56, 0, -0.15);
+            store.add(panelLargo);
+            registrarSeleccionable(panelLargo, {
+                nombre: "Panel izquierdo principal",
+                tipo: "muro",
+                zona: "Muro izquierdo",
+                deletable: false,
+                isWallTarget: true,
+                wallTargetId: "muro-izquierdo"
+            });
+            registrarMovible(panelLargo);
+            registrarMuroEditable("muro-izquierdo", "Muro izquierdo", panelLargo, {
+                kind: "wall-left",
+                normalX: 0.18,
+                baseZ: -5.2,
+                stepZ: 0.48
+            });
+
+            const fondo = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.18, 15.4), matNegro);
+            fondo.position.set(0, 1.25, 0);
+            panelLargo.add(fondo);
+
+            for (let i = -6; i <= 6; i += 1) {
+                const shelf = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.36, 0.04, 0.62),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x12181b,
+                        metalness: 0.3,
+                        roughness: 0.58
+                    })
+                );
+                const y = 0.36 + ((i + 6) % 3) * 0.54;
+                const z = i * 1.05;
+                shelf.position.set(0.12, y, z);
+                panelLargo.add(shelf);
+
+                crearZapatillaSelectable(panelLargo, 0.135, y + 0.075, z, 0.26, i % 2 === 0 ? 0x7ef0c0 : 0x30363c, {
+                    nombre: `Zapatilla izquierda ${i + 7}`,
+                    tipo: "zapatilla",
+                    zona: "Muro izquierdo",
+                    wallTargetId: "muro-izquierdo"
+                });
+            }
+
+            for (let i = 0; i < 6; i += 1) {
+                const glow = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.02, 0.04, 0.54),
+                    new THREE.MeshStandardMaterial({
+                        color: i % 2 === 0 ? 0x7ef0c0 : 0x74cfff,
+                        emissive: i % 2 === 0 ? 0x7ef0c0 : 0x74cfff,
+                        emissiveIntensity: 1.1
+                    })
+                );
+                glow.position.set(0.15, 0.15 + (i % 3) * 0.54, -5.2 + i * 1.8);
+                panelLargo.add(glow);
+            }
+        }
+
+        function agregarMuroDerechoExacto() {
+            const zonaDerecha = new THREE.Group();
+            store.add(zonaDerecha);
+
+            const panelPantallas = new THREE.Group();
+            panelPantallas.position.set(1.54, 0, 7.15);
+            zonaDerecha.add(panelPantallas);
+            registrarSeleccionable(panelPantallas, {
+                nombre: "Panel de entrada derecho",
+                tipo: "muro",
+                zona: "Muro derecho",
+                deletable: false,
+                isWallTarget: true,
+                wallTargetId: "muro-derecho"
+            });
+            registrarMovible(panelPantallas);
+            registrarMuroEditable("muro-derecho", "Muro derecho", panelPantallas, {
+                kind: "wall-right",
+                normalX: 0.03,
+                baseZ: -0.36,
+                stepZ: 0.22
+            });
+
+            const basePanel = crearPanelNegro(panelPantallas, 1.02, 2.0, 0, 1.35, 0, -Math.PI / 2);
+            marcarSeleccionableEnJerarquia(basePanel, panelPantallas);
+
+            const pantallasData = [
+                { x: -0.28, y: 2.35, w: 0.34, h: 0.62, color: ["#1f2d73", "#5b8bff", "#b8d6ff"], nombre: "Pantalla mural 1" },
+                { x: 0.0, y: 2.55, w: 0.38, h: 0.78, color: ["#5d88ff", "#9db6ff", "#ffffff"], nombre: "Pantalla mural 2" },
+                { x: 0.28, y: 2.35, w: 0.34, h: 0.62, color: ["#1f2d73", "#5b8bff", "#b8d6ff"], nombre: "Pantalla mural 3" },
+                { x: -0.56, y: 2.25, w: 0.28, h: 0.44, color: ["#08142f", "#5279e0", "#b6d6ff"], nombre: "Pantalla mural 4" },
+                { x: 0.56, y: 2.25, w: 0.28, h: 0.44, color: ["#08142f", "#5279e0", "#b6d6ff"], nombre: "Pantalla mural 5" }
+            ];
+
+            pantallasData.forEach((item, index) => {
+                const texture = crearTexturaPantalla(item.color[0], item.color[1], item.color[2]);
+                crearPantalla(
+                    panelPantallas,
+                    item.w,
+                    item.h,
+                    texture,
+                    0x5b8bff,
+                    0.03,
+                    item.y,
+                    item.x,
+                    -Math.PI / 2,
+                    {
+                        nombre: item.nombre,
+                        tipo: "pantalla",
+                        zona: "Muro derecho",
+                        uid: `pantalla-derecha-${index + 1}`,
+                        wallTargetId: "muro-derecho"
+                    }
+                );
+            });
+
+            const zapatillasMuro = [
+                { x: -0.32, y: 1.82, z: -0.28, color: 0xe7f2ff, nombre: "Zapatilla mural 1" },
+                { x: 0.08, y: 1.64, z: 0.02, color: 0xf2f4f5, nombre: "Zapatilla mural 2" },
+                { x: 0.32, y: 1.78, z: 0.3, color: 0x5ecbff, nombre: "Zapatilla mural 3" },
+                { x: -0.38, y: 1.14, z: -0.32, color: 0x0f1117, nombre: "Zapatilla mural 4" },
+                { x: -0.06, y: 0.9, z: -0.08, color: 0xffffff, nombre: "Zapatilla mural 5" },
+                { x: 0.26, y: 1.02, z: 0.18, color: 0xff7d6b, nombre: "Zapatilla mural 6" },
+                { x: 0.5, y: 0.82, z: 0.48, color: 0x9cff55, nombre: "Zapatilla mural 7" }
+            ];
+
+            zapatillasMuro.forEach((item, index) => {
+                crearZapatillaSelectable(panelPantallas, 0.03, item.y, item.z, -0.2, item.color, {
+                    nombre: item.nombre,
+                    tipo: "zapatilla",
+                    zona: "Muro derecho",
+                    uid: `zapatilla-derecha-${index + 1}`,
+                    wallTargetId: "muro-derecho"
+                }).position.x = 0.03;
+            });
+
+            const pantallaVertical = crearPantalla(
+                zonaDerecha,
+                0.36,
+                1.16,
+                crearTexturaVertical("#1cf15f", "#0c1116"),
+                0x1cf15f,
+                1.47,
+                0.9,
+                7.55,
+                -Math.PI / 2,
+                {
+                    nombre: "Pantalla vertical de entrada",
+                    tipo: "pantalla",
+                    zona: "Entrada derecha",
+                    uid: "pantalla-vertical-entrada",
+                    wallTargetId: "muro-derecho"
+                }
+            );
+            pantallaVertical.position.set(1.47, 0.9, 7.55);
+
+            const torreNegra = new THREE.Group();
+            torreNegra.position.set(1.49, 0, 6.85);
+            zonaDerecha.add(torreNegra);
+            registrarSeleccionable(torreNegra, {
+                nombre: "Torre negra",
+                tipo: "mueble",
+                zona: "Entrada derecha",
+                uid: "torre-negra",
+                wallTargetId: "muro-derecho"
+            });
+            registrarMovible(torreNegra);
+
+            const torre = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.1, 0.34), matNegro);
+            torre.position.y = 0.55;
+            torreNegra.add(torre);
+
+            for (let i = 0; i < 3; i += 1) {
+                const luz = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.05, 0.03, 0.05),
+                    new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        emissive: 0xffffff,
+                        emissiveIntensity: 1.2
+                    })
+                );
+                luz.position.set(-0.11, 0.18 + i * 0.3, 0.17);
+                torreNegra.add(luz);
+            }
+
+            const posterDerecho = crearPantalla(
+                zonaDerecha,
+                0.6,
+                1.12,
+                crearTexturaPoster("#0b1911", "#3bd76a"),
+                0x3bd76a,
+                1.22,
+                1.7,
+                6.85,
+                -Math.PI / 2,
+                {
+                    nombre: "Imagen principal del muro derecho",
+                    tipo: "imagen",
+                    zona: "Muro derecho",
+                    uid: "imagen-principal-derecha",
+                    wallTargetId: "muro-derecho"
+                }
+            );
+            const moduloAC = new THREE.Mesh(
+                new THREE.BoxGeometry(0.52, 0.24, 0.24),
+                new THREE.MeshStandardMaterial({
+                    color: 0xd8dde2,
+                    roughness: 0.56,
+                    metalness: 0.08
+                })
+            );
+            moduloAC.position.set(0.4, 2.72, 6.35);
+            store.add(moduloAC);
+
+            const proyector = new THREE.Mesh(
+                new THREE.BoxGeometry(0.34, 0.16, 0.2),
+                new THREE.MeshStandardMaterial({
+                    color: 0xe7ecef,
+                    roughness: 0.54,
+                    metalness: 0.08
+                })
+            );
+            proyector.position.set(0.4, 2.46, 6.42);
+            store.add(proyector);
+        }
+
+        function agregarCentroYPremium() {
+            const mesaCentral = new THREE.Group();
+            mesaCentral.position.set(1.38, 0, 8.12);
+            store.add(mesaCentral);
+            registrarSeleccionable(mesaCentral, {
+                nombre: "Mesa de entrada",
+                tipo: "mueble",
+                zona: "Entrada derecha",
+                uid: "mesa-entrada",
+                wallTargetId: "muro-derecho"
+            });
+            registrarMovible(mesaCentral);
+
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(0.72, 0.34, 0.54),
+                new THREE.MeshStandardMaterial({
+                    color: 0x171c20,
+                    roughness: 0.54,
+                    metalness: 0.26
+                })
+            );
+            base.position.y = 0.18;
+            mesaCentral.add(base);
+
+            crearZapatillaSelectable(mesaCentral, -0.12, 0.42, -0.06, 0.18, 0xf0f3ef, {
+                nombre: "Zapatilla mesa 1",
+                tipo: "zapatilla",
+                zona: "Entrada derecha",
+                uid: "zapatilla-mesa-1",
+                wallTargetId: "muro-derecho"
+            });
+            crearZapatillaSelectable(mesaCentral, 0.1, 0.42, 0.1, -0.12, 0xff6d62, {
+                nombre: "Zapatilla mesa 2",
+                tipo: "zapatilla",
+                zona: "Entrada derecha",
+                uid: "zapatilla-mesa-2",
+                wallTargetId: "muro-derecho"
+            });
+
+            const premium = new THREE.Group();
+            premium.position.set(-0.2, 0, -6.6);
+            store.add(premium);
+            registrarSeleccionable(premium, {
+                nombre: "Zona premium",
+                tipo: "muro",
+                zona: "Fondo",
+                uid: "zona-premium",
+                deletable: false,
+                isWallTarget: true,
+                wallTargetId: "premium"
+            });
+            registrarMovible(premium);
+            registrarMuroEditable("premium", "Zona premium", premium, {
+                kind: "premium",
+                normalX: 0,
+                baseZ: -0.45,
+                stepZ: 0.34
+            });
+
+            const plataforma = new THREE.Mesh(
+                new THREE.BoxGeometry(2.1, 0.16, 1.8),
+                new THREE.MeshStandardMaterial({
+                    color: 0x161d21,
+                    roughness: 0.82,
+                    metalness: 0.12
+                })
+            );
+            plataforma.position.set(0, 0.08, 0);
+            premium.add(plataforma);
+
+            for (let i = -1; i <= 1; i += 1) {
+                const podio = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.22, 0.26, 0.62, 20),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x10161a,
+                        roughness: 0.7,
+                        metalness: 0.18
+                    })
+                );
+                podio.position.set(i * 0.55, 0.31, 0);
+                premium.add(podio);
+
+                crearZapatillaSelectable(premium, i * 0.55, 0.66, 0, 0.16, i === 0 ? 0xff6ab8 : 0x7ef0c0, {
+                    nombre: `Zapatilla premium ${i + 2}`,
+                    tipo: "zapatilla",
+                    zona: "Fondo",
+                    uid: `zapatilla-premium-${i + 2}`,
+                    wallTargetId: "premium"
+                });
+            }
+        }
+
+        function aplicarResaltado(root, activo) {
+            root.traverse((child) => {
+                if (!child.isMesh || !child.material || !("emissive" in child.material)) {
+                    return;
+                }
+                if (!child.userData.originalEmissive) {
+                    child.userData.originalEmissive = child.material.emissive.clone();
+                    child.userData.originalIntensity = child.material.emissiveIntensity || 0;
+                }
+                if (activo) {
+                    child.material.emissive = new THREE.Color(0x1f6b59);
+                    child.material.emissiveIntensity = Math.max(child.userData.originalIntensity || 0, 0.62);
+                } else {
+                    child.material.emissive.copy(child.userData.originalEmissive);
+                    child.material.emissiveIntensity = child.userData.originalIntensity || 0;
+                }
+            });
+        }
+
+        function seleccionarObjeto(root) {
+            if (selectedObject === root) {
+                return;
+            }
+            if (selectedObject) {
+                aplicarResaltado(selectedObject, false);
+            }
+            selectedObject = root;
+            if (selectedObject) {
+                aplicarResaltado(selectedObject, true);
+                if (selectedObject.userData.wallTargetId) {
+                    selectedWallId = selectedObject.userData.wallTargetId;
+                    buildWall.value = selectedWallId;
+                    buildWallStatus.textContent = wallTargets[selectedWallId]?.nombre || "-";
+                }
+            }
+            actualizarInspector();
+        }
+
+        function actualizarInspector() {
+            if (!selectedObject) {
+                selectedShort.textContent = "Ninguna";
+                propNombreVista.textContent = "Ninguno";
+                propTipoVista.textContent = "-";
+                propZonaVista.textContent = "-";
+                propPosVista.textContent = "-";
+                propNombre.value = "";
+                propTipo.value = "pantalla";
+                propNota.value = "";
+                buildWallStatus.textContent = wallTargets[selectedWallId]?.nombre || "-";
+                return;
+            }
+
+            const meta = selectedObject.userData.meta;
+            selectedShort.textContent = meta.nombre;
+            propNombreVista.textContent = meta.nombre;
+            propTipoVista.textContent = meta.tipo;
+            propZonaVista.textContent = meta.zona;
+            propPosVista.textContent = `${selectedObject.position.x.toFixed(2)}, ${selectedObject.position.y.toFixed(2)}, ${selectedObject.position.z.toFixed(2)}`;
+            propNombre.value = meta.nombre;
+            propTipo.value = meta.tipo;
+            propNota.value = meta.nota || "";
+            buildWallStatus.textContent = wallTargets[selectedWallId]?.nombre || "-";
+        }
+
+        function guardarPropiedadesSeleccion() {
+            if (!selectedObject) {
+                return;
+            }
+            selectedObject.userData.meta.nombre = propNombre.value.trim() || selectedObject.userData.meta.nombre;
+            selectedObject.userData.meta.tipo = propTipo.value;
+            selectedObject.userData.meta.nota = propNota.value.trim();
+            propertyStore[selectedObject.userData.uid] = { ...selectedObject.userData.meta };
+            localStorage.setItem("tiendaVirtualPropiedades", JSON.stringify(propertyStore));
+            actualizarInspector();
+        }
+
+        function restaurarPropiedadesSeleccion() {
+            if (!selectedObject) {
+                return;
+            }
+            delete propertyStore[selectedObject.userData.uid];
+            localStorage.setItem("tiendaVirtualPropiedades", JSON.stringify(propertyStore));
+            selectedObject.userData.meta = { ...selectedObject.userData.originalMeta };
+            actualizarInspector();
+        }
+
+        function obtenerSiguienteSlot(target, type) {
+            target.counters[type] += 1;
+            return target.counters[type] - 1;
+        }
+
+        function crearElementoManual() {
+            const wallId = buildWall.value;
+            const type = buildType.value;
+            const target = wallTargets[wallId];
+            if (!target) {
+                return;
+            }
+
+            selectedWallId = wallId;
+            buildWallStatus.textContent = target.nombre;
+            const slot = obtenerSiguienteSlot(target, type);
+            const row = slot % 4;
+            const col = Math.floor(slot / 4);
+            const baseY = 0.62 + row * 0.38;
+            const offsetZ = target.config.baseZ + col * target.config.stepZ;
+            const wallX = target.config.normalX ?? 0;
+            const uid = `manual-${wallId}-${type}-${slot + 1}`;
+
+            let nuevo = null;
+            if (type === "pantalla") {
+                nuevo = crearPantalla(
+                    target.group,
+                    0.24,
+                    0.16,
+                    crearTexturaPantalla("#0d1b39", "#4e79f2", "#c4dcff"),
+                    0x5b8bff,
+                    wallX,
+                    baseY,
+                    offsetZ,
+                    wallId === "muro-izquierdo" ? Math.PI / 2 : -Math.PI / 2,
+                    {
+                        nombre: `Pantalla ${slot + 1}`,
+                        tipo: "pantalla",
+                        zona: target.nombre,
+                        uid,
+                        wallTargetId: wallId
+                    }
+                );
+            } else if (type === "imagen") {
+                nuevo = crearPantalla(
+                    target.group,
+                    0.26,
+                    0.36,
+                    crearTexturaPoster("#0e1216", "#44d76b"),
+                    0x2fcf6a,
+                    wallX,
+                    baseY + 0.12,
+                    offsetZ,
+                    wallId === "muro-izquierdo" ? Math.PI / 2 : -Math.PI / 2,
+                    {
+                        nombre: `Imagen ${slot + 1}`,
+                        tipo: "imagen",
+                        zona: target.nombre,
+                        uid,
+                        wallTargetId: wallId
+                    }
+                );
+            } else if (type === "zapatilla") {
+                nuevo = crearZapatillaSelectable(
+                    target.group,
+                    wallX,
+                    baseY,
+                    offsetZ,
+                    wallId === "muro-izquierdo" ? 0.26 : -0.18,
+                    slot % 2 === 0 ? 0x7ef0c0 : 0xff7d6b,
+                    {
+                        nombre: `Zapatilla ${slot + 1}`,
+                        tipo: "zapatilla",
+                        zona: target.nombre,
+                        uid,
+                        wallTargetId: wallId
+                    }
+                );
+            } else if (type === "balda") {
+                nuevo = crearBaldaSelectable(
+                    target.group,
+                    wallX,
+                    baseY - 0.06,
+                    offsetZ,
+                    wallId === "muro-izquierdo" ? Math.PI / 2 : -Math.PI / 2,
+                    {
+                        nombre: `Balda ${slot + 1}`,
+                        tipo: "mueble",
+                        zona: target.nombre,
+                        uid,
+                        wallTargetId: wallId
+                    }
+                );
+            } else if (type === "decoracion") {
+                nuevo = crearDecoracionSelectable(
+                    target.group,
+                    wallX,
+                    baseY,
+                    offsetZ,
+                    {
+                        nombre: `Decoracion ${slot + 1}`,
+                        tipo: "decoracion",
+                        zona: target.nombre,
+                        uid,
+                        wallTargetId: wallId
+                    }
+                );
+            }
+
+            if (nuevo) {
+                seleccionarObjeto(nuevo);
+            }
+        }
+
+        function eliminarSeleccionado() {
+            if (!selectedObject || !selectedObject.userData.deletable) {
+                return;
+            }
+            aplicarResaltado(selectedObject, false);
+            const selectIndex = selectableRoots.indexOf(selectedObject);
+            if (selectIndex >= 0) {
+                selectableRoots.splice(selectIndex, 1);
+            }
+            const dragIndex = draggableRoots.indexOf(selectedObject);
+            if (dragIndex >= 0) {
+                draggableRoots.splice(dragIndex, 1);
+            }
+            delete propertyStore[selectedObject.userData.uid];
+            localStorage.setItem("tiendaVirtualPropiedades", JSON.stringify(propertyStore));
+            selectedObject.parent?.remove(selectedObject);
+            selectedObject = null;
+            actualizarInspector();
+        }
+
+        function setPointerFromEvent(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        function obtenerObjetoSeleccionable(event) {
+            setPointerFromEvent(event);
+            raycaster.setFromCamera(pointer, camera);
+            const hits = raycaster.intersectObjects(selectableRoots, true);
+            for (const hit of hits) {
+                if (hit.object.userData.selectRoot) {
+                    return hit.object.userData.selectRoot;
+                }
+            }
+            return null;
+        }
+
+        function recadrarCamara() {
+            camera.rotation.order = "YXZ";
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+        }
+
+        function actualizarEstadoEdicion() {
+            editStatus.textContent = editMode ? "Activado" : "Desactivado";
+            toggleEditButton.textContent = editMode ? "Modo edicion: activado" : "Modo edicion: desactivado";
+            toggleEditButton.classList.toggle("is-active", editMode);
+        }
+
+        function irAZona(clave) {
+            const zonas = {
+                entrada: { position: new THREE.Vector3(0, 1.68, 8.6), yaw: Math.PI },
+                "muro-izquierdo": { position: new THREE.Vector3(-0.42, 1.68, 1.5), yaw: Math.PI + 0.22 },
+                "muro-derecho": { position: new THREE.Vector3(0.38, 1.68, 6.9), yaw: Math.PI - 0.62 },
+                premium: { position: new THREE.Vector3(0, 1.68, -6.2), yaw: Math.PI }
+            };
+            const zona = zonas[clave];
+            if (!zona) {
+                return;
+            }
+            camera.position.copy(zona.position);
+            yaw = zona.yaw;
+            pitch = 0;
+            recadrarCamara();
+        }
+
+        function limitarPosicionCamara() {
+            camera.position.x = THREE.MathUtils.clamp(camera.position.x, -1.18, 1.18);
+            camera.position.z = THREE.MathUtils.clamp(camera.position.z, -8.9, 9.05);
+            camera.position.y = 1.68;
+        }
+
+        function onPointerDown(event) {
+            const hit = obtenerObjetoSeleccionable(event);
+            if (hit) {
+                seleccionarObjeto(hit);
+                if (editMode && hit.userData.isDraggable) {
+                    draggedRoot = hit;
+                    isDraggingObject = true;
+                    isDraggingView = false;
+                    setPointerFromEvent(event);
+                    raycaster.setFromCamera(pointer, camera);
+                    if (raycaster.ray.intersectPlane(dragPlane, dragPoint)) {
+                        dragOffset.copy(draggedRoot.position).sub(dragPoint);
+                    } else {
+                        dragOffset.set(0, 0, 0);
+                    }
+                    return;
+                }
+            }
+
+            isDraggingView = true;
+            lastX = event.clientX;
+            lastY = event.clientY;
+        }
+
+        function onPointerMove(event) {
+            if (isDraggingObject && draggedRoot) {
+                setPointerFromEvent(event);
+                raycaster.setFromCamera(pointer, camera);
+                if (raycaster.ray.intersectPlane(dragPlane, dragPoint)) {
+                    draggedRoot.position.x = THREE.MathUtils.clamp(dragPoint.x + dragOffset.x, -0.95, 0.95);
+                    draggedRoot.position.z = THREE.MathUtils.clamp(dragPoint.z + dragOffset.z, -8.35, 8.35);
+                    draggedRoot.position.y = draggedRoot.userData.baseY ?? draggedRoot.position.y;
+                }
+                actualizarInspector();
+                return;
+            }
+
+            if (!isDraggingView) {
+                return;
+            }
+
+            const dx = event.clientX - lastX;
+            const dy = event.clientY - lastY;
+            lastX = event.clientX;
+            lastY = event.clientY;
+            yaw -= dx * 0.004;
+            pitch -= dy * 0.003;
+            pitch = THREE.MathUtils.clamp(pitch, -0.55, 0.55);
+            recadrarCamara();
+        }
+
+        function onPointerUp() {
+            isDraggingView = false;
+            isDraggingObject = false;
+            draggedRoot = null;
+        }
+
+        agregarSueloYTecho();
+        agregarMuros();
+        agregarPuertaEntrada();
+        agregarIluminacion();
+        agregarMuroIzquierdo();
+        agregarMuroDerechoExacto();
+        agregarCentroYPremium();
+        actualizarEstadoEdicion();
+        actualizarInspector();
+        irAZona("entrada");
+
+        renderer.domElement.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+
+        window.addEventListener("keydown", (event) => {
+            const key = event.key.toLowerCase();
+            if (key === "z" || key === "w") input.forward = true;
+            if (key === "s") input.backward = true;
+            if (key === "q" || key === "a") input.left = true;
+            if (key === "d") input.right = true;
+            if (key === "arrowleft") input.turnLeft = true;
+            if (key === "arrowright") input.turnRight = true;
+        });
+
+        window.addEventListener("keyup", (event) => {
+            const key = event.key.toLowerCase();
+            if (key === "z" || key === "w") input.forward = false;
+            if (key === "s") input.backward = false;
+            if (key === "q" || key === "a") input.left = false;
+            if (key === "d") input.right = false;
+            if (key === "arrowleft") input.turnLeft = false;
+            if (key === "arrowright") input.turnRight = false;
+        });
+
+        document.querySelectorAll("[data-jump]").forEach((button) => {
+            button.addEventListener("click", () => irAZona(button.dataset.jump));
+        });
+
+        document.getElementById("resetView").addEventListener("click", () => {
+            pitch = 0;
+            recadrarCamara();
+        });
+
+        toggleEditButton.addEventListener("click", () => {
+            editMode = !editMode;
+            actualizarEstadoEdicion();
+        });
+
+        saveProps.addEventListener("click", guardarPropiedadesSeleccion);
+        resetProps.addEventListener("click", restaurarPropiedadesSeleccion);
+        createObject.addEventListener("click", crearElementoManual);
+        deleteObject.addEventListener("click", eliminarSeleccionado);
+        buildWall.addEventListener("change", () => {
+            selectedWallId = buildWall.value;
+            buildWallStatus.textContent = wallTargets[selectedWallId]?.nombre || "-";
+        });
+
+        document.querySelectorAll("[data-hold]").forEach((button) => {
+            const key = button.dataset.hold;
+            const map = {
+                forward: "forward",
+                backward: "backward",
+                left: "left",
+                right: "right",
+                "turn-left": "turnLeft",
+                "turn-right": "turnRight"
+            };
+            const target = map[key];
+
+            const activar = () => {
+                input[target] = true;
+            };
+            const cortar = () => {
+                input[target] = false;
+            };
+
+            button.addEventListener("pointerdown", activar);
+            button.addEventListener("pointerup", cortar);
+            button.addEventListener("pointerleave", cortar);
+            button.addEventListener("pointercancel", cortar);
+            button.addEventListener("touchstart", activar, { passive: true });
+            button.addEventListener("touchend", cortar);
+        });
+
+        const clock = new THREE.Clock();
+
+        function animar() {
+            requestAnimationFrame(animar);
+
+            const dt = Math.min(clock.getDelta(), 0.05);
+            const velocidad = 2.25;
+            const velocidadRotacion = 1.8;
+
+            if (input.turnLeft) yaw += velocidadRotacion * dt;
+            if (input.turnRight) yaw -= velocidadRotacion * dt;
+
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            direction.y = 0;
+            direction.normalize();
+
+            const right = new THREE.Vector3(direction.z, 0, -direction.x).normalize();
+
+            if (!isDraggingObject) {
+                if (input.forward) camera.position.addScaledVector(direction, velocidad * dt);
+                if (input.backward) camera.position.addScaledVector(direction, -velocidad * dt);
+                if (input.left) camera.position.addScaledVector(right, -velocidad * dt);
+                if (input.right) camera.position.addScaledVector(right, velocidad * dt);
+            }
+
+            limitarPosicionCamara();
+            recadrarCamara();
+            if (selectedObject) {
+                propPosVista.textContent = `${selectedObject.position.x.toFixed(2)}, ${selectedObject.position.y.toFixed(2)}, ${selectedObject.position.z.toFixed(2)}`;
+            }
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animar();
+    </script>
+</body>
+</html>
