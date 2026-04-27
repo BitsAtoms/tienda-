@@ -1,0 +1,283 @@
+:root {
+  --iu-bg: #070a11;
+  --iu-panel: rgba(10, 14, 22, 0.9);
+  --iu-panel-soft: rgba(255, 255, 255, 0.055);
+  --iu-line: rgba(220, 230, 240, 0.16);
+  --iu-line-strong: rgba(125, 222, 207, 0.52);
+  --iu-text: #f4f7fb;
+  --iu-muted: #9aa7b7;
+  --iu-accent: #75decf;
+  --iu-warm: #f0b15f;
+  --iu-danger: #f06d7e;
+  --font-sans: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea,
+.font-mono,
+.font-sans {
+  font-family: var(--font-sans) !important;
+  letter-spacing: 0 !important;
+}
+
+[class*="tracking-"] {
+  letter-spacing: 0 !important;
+}
+
+body.interfaz-union-standalone {
+  background: var(--iu-bg);
+  color: var(--iu-text);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.interfaz-union-standalone .uppercase {
+  text-transform: none !important;
+}
+
+body.interfaz-union-standalone .rounded-2xl,
+body.interfaz-union-standalone .rounded-xl {
+  border-radius: 8px !important;
+}
+
+body.interfaz-union-standalone aside,
+body.interfaz-union-standalone .bg-gray-900,
+body.interfaz-union-standalone .bg-\[\#050816\] {
+  background-color: var(--iu-bg) !important;
+}
+
+body.interfaz-union-standalone aside section,
+body.interfaz-union-standalone aside .rounded-2xl,
+body.interfaz-union-standalone .border-white\/8.bg-white\/\[0\.04\] {
+  background: var(--iu-panel-soft) !important;
+  border-color: var(--iu-line) !important;
+  box-shadow: none !important;
+}
+
+body.interfaz-union-standalone h1,
+body.interfaz-union-standalone h2,
+body.interfaz-union-standalone h3,
+body.interfaz-union-standalone strong {
+  color: var(--iu-text) !important;
+  font-weight: 650 !important;
+}
+
+body.interfaz-union-standalone .text-slate-400,
+body.interfaz-union-standalone .text-slate-500,
+body.interfaz-union-standalone .text-gray-400,
+body.interfaz-union-standalone .text-gray-500 {
+  color: var(--iu-muted) !important;
+}
+
+body.interfaz-union-standalone .text-cyan-300,
+body.interfaz-union-standalone .text-cyan-200 {
+  color: var(--iu-accent) !important;
+}
+
+body.interfaz-union-standalone button {
+  min-height: 38px;
+}
+
+body.interfaz-union-standalone button:focus-visible,
+body.interfaz-union-standalone input:focus-visible {
+  outline: 2px solid var(--iu-accent);
+  outline-offset: 2px;
+}
+
+.iu-wall-panel {
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.92), rgba(7, 10, 17, 0.96)) !important;
+  border-color: var(--iu-line) !important;
+}
+
+.iu-wall-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.iu-wall-guide span {
+  border: 1px solid var(--iu-line);
+  border-radius: 8px;
+  color: var(--iu-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 9px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.iu-wall-lane {
+  gap: 8px;
+}
+
+.iu-wall-lane > div:first-child {
+  align-items: center;
+  color: var(--iu-muted) !important;
+  font-size: 12px !important;
+}
+
+.iu-wall-lane > div:first-child span:last-child {
+  color: var(--iu-accent) !important;
+}
+
+.wall-bg {
+  height: 154px !important;
+  border: 1px solid var(--iu-line-strong) !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(90deg, rgba(117, 222, 207, 0.13) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(117, 222, 207, 0.09) 1px, transparent 1px),
+    radial-gradient(circle at 50% 30%, rgba(240, 177, 95, 0.12), transparent 36%),
+    rgba(4, 8, 14, 0.92) !important;
+  background-size: 10%, 25%, auto, auto !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+}
+
+.wall-bg::before,
+.wall-bg::after {
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+  color: rgba(244, 247, 251, 0.64);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.wall-bg::before {
+  content: "eje X";
+  right: 10px;
+  bottom: 9px;
+}
+
+.wall-bg::after {
+  content: "altura";
+  left: 10px;
+  top: 10px;
+}
+
+.wall-bg > .absolute[title] {
+  border-radius: 6px !important;
+}
+
+.wall-bg > .absolute[style*="18px"] {
+  width: 20px !important;
+  height: 20px !important;
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease !important;
+}
+
+.wall-bg > .absolute[style*="18px"]:hover {
+  filter: brightness(1.22);
+  transform: translate(-50%, -50%) scale(1.12) !important;
+}
+
+.iu-action-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.iu-action-panel button {
+  border: 1px solid var(--iu-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--iu-text);
+  padding: 9px 10px;
+  font-size: 12px;
+  line-height: 1.15;
+  text-align: center;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.iu-action-panel button:hover {
+  border-color: var(--iu-accent);
+  background: rgba(117, 222, 207, 0.11);
+}
+
+.iu-action-panel button[data-active="true"] {
+  border-color: var(--iu-warm);
+  color: #ffe4bd;
+  background: rgba(240, 177, 95, 0.13);
+}
+
+.iu-object-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.iu-object-badges span {
+  border: 1px solid var(--iu-line);
+  border-radius: 999px;
+  color: var(--iu-muted);
+  background: rgba(255, 255, 255, 0.045);
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.iu-scene-focus {
+  pointer-events: none;
+  position: fixed;
+  z-index: 70;
+  left: 50%;
+  top: 50%;
+  width: min(34vw, 440px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(117, 222, 207, 0.55);
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.18), 0 0 44px rgba(117, 222, 207, 0.16);
+  opacity: 0;
+  animation: iuFocus 1.4s ease forwards;
+}
+
+.iu-toast {
+  position: fixed;
+  z-index: 80;
+  right: 22px;
+  bottom: 22px;
+  max-width: 320px;
+  border: 1px solid var(--iu-line);
+  border-radius: 8px;
+  background: rgba(7, 10, 17, 0.94);
+  color: var(--iu-text);
+  padding: 11px 13px;
+  font-size: 13px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: iuToast 2.4s ease forwards;
+}
+
+@keyframes iuFocus {
+  0% { opacity: 0; scale: 0.88; }
+  22% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: 1.04; }
+}
+
+@keyframes iuToast {
+  0% { opacity: 0; transform: translateY(8px); }
+  12%, 82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+@media (max-width: 1180px) {
+  body.interfaz-union-standalone .w-\[380px\] {
+    width: 320px !important;
+  }
+
+  body.interfaz-union-standalone .w-80 {
+    width: 280px !important;
+  }
+
+  .iu-wall-guide {
+    grid-template-columns: 1fr;
+  }
+}
