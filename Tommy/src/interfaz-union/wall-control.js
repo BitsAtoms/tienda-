@@ -18,9 +18,9 @@
     const guide = document.createElement("div");
     guide.className = "iu-wall-guide";
     guide.innerHTML = [
-      "<span>Plano frontal por pared</span>",
-      "<span>Puntos editables con color</span>",
-      "<span>Zonas fijas en baja opacidad</span>",
+      "<span>Lectura panoramica por pared</span>",
+      "<span>Nodos editables sobre la vista de sala</span>",
+      "<span>Arquitectura fija suavizada al fondo</span>",
     ].join("");
 
     const header = panel.querySelector("h2")?.parentElement;
@@ -32,9 +32,12 @@
       wall.dataset.wallSide = index === 0 ? "left" : "right";
       const lane = wall.closest(".flex.flex-col");
       if (lane) lane.classList.add("iu-wall-lane");
+      wall.classList.add("iu-wall-panorama");
 
       const meta = lane?.querySelector("div:first-child span:last-child");
-      if (meta) meta.textContent = "Izquierda a derecha";
+      if (meta) {
+        meta.textContent = index === 0 ? "Panoramica sala - ala izquierda" : "Panoramica sala - ala derecha";
+      }
     });
   }
 

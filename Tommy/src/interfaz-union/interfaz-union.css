@@ -9,10 +9,11 @@
   --iu-accent: #75decf;
   --iu-warm: #f0b15f;
   --iu-danger: #f06d7e;
-  --font-sans: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "JetBrains Mono", "Segoe UI", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "JetBrains Mono", "Segoe UI", ui-monospace, SFMono-Regular, monospace;
 }
 
+*,
 html,
 body,
 #root,
@@ -106,14 +107,14 @@ body.interfaz-union-standalone input:focus-visible {
   border: 1px solid var(--iu-line);
   border-radius: 8px;
   color: var(--iu-muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(117, 222, 207, 0.05));
   padding: 7px 9px;
   font-size: 12px;
   line-height: 1.2;
 }
 
 .iu-wall-lane {
-  gap: 8px;
+  gap: 12px;
 }
 
 .iu-wall-lane > div:first-child {
@@ -127,16 +128,21 @@ body.interfaz-union-standalone input:focus-visible {
 }
 
 .wall-bg {
-  height: 154px !important;
+  height: 182px !important;
   border: 1px solid var(--iu-line-strong) !important;
-  border-radius: 8px !important;
+  border-radius: 14px !important;
   background:
-    linear-gradient(90deg, rgba(117, 222, 207, 0.13) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(117, 222, 207, 0.09) 1px, transparent 1px),
-    radial-gradient(circle at 50% 30%, rgba(240, 177, 95, 0.12), transparent 36%),
-    rgba(4, 8, 14, 0.92) !important;
-  background-size: 10%, 25%, auto, auto !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    linear-gradient(90deg, rgba(117, 222, 207, 0.11) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(117, 222, 207, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 50% 18%, rgba(244, 247, 251, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(15, 24, 38, 0.92), rgba(5, 9, 16, 0.98)) !important;
+  background-size: 8%, 22%, auto, auto !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 18px 32px rgba(255, 255, 255, 0.03),
+    0 14px 30px rgba(0, 0, 0, 0.28) !important;
+  transform: perspective(980px) rotateX(12deg);
+  transform-origin: center top;
 }
 
 .wall-bg::before,
@@ -150,15 +156,24 @@ body.interfaz-union-standalone input:focus-visible {
 }
 
 .wall-bg::before {
-  content: "eje X";
+  content: "panorama X";
   right: 10px;
   bottom: 9px;
 }
 
 .wall-bg::after {
-  content: "altura";
+  content: "altura / lectura";
   left: 10px;
   top: 10px;
+}
+
+.iu-wall-panorama::selection {
+  background: transparent;
+}
+
+.iu-wall-panorama > .absolute.opacity-40.pointer-events-none {
+  opacity: 0.28 !important;
+  filter: blur(0.2px);
 }
 
 .wall-bg > .absolute[title] {
@@ -169,12 +184,206 @@ body.interfaz-union-standalone input:focus-visible {
   width: 20px !important;
   height: 20px !important;
   transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease !important;
+  box-shadow: 0 0 0 2px rgba(8, 12, 20, 0.45), 0 0 18px currentColor;
 }
 
 .wall-bg > .absolute[style*="18px"]:hover {
   filter: brightness(1.22);
   transform: translate(-50%, -50%) scale(1.12) !important;
 }
+
+.iu-room-presets {
+  grid-template-columns: 1fr;
+}
+
+.iu-room-builder {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--iu-line);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.iu-room-builder-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.iu-room-builder-heading strong {
+  font-size: 13px;
+}
+
+.iu-room-builder-heading span,
+.iu-room-summary span,
+.iu-room-field span {
+  color: var(--iu-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.iu-room-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  min-width: 0;
+}
+
+.iu-room-field {
+  display: grid;
+  gap: 6px;
+}
+
+.iu-room-field input,
+.iu-room-field select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--iu-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--iu-text);
+  padding: 8px 10px;
+}
+
+.iu-room-field input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+.iu-room-field em {
+  color: var(--iu-accent);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.iu-room-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  min-width: 0;
+}
+
+.iu-room-presets button,
+.iu-room-actions button {
+  width: 100%;
+  border: 1px solid var(--iu-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--iu-text);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.iu-room-actions button:hover {
+  border-color: var(--iu-accent);
+  background: rgba(117, 222, 207, 0.11);
+}
+
+.iu-room-summary {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--iu-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 12px;
+}
+
+.iu-topdown-shell {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  padding-bottom: 10px;
+}
+
+.iu-top-map {
+  min-height: 440px;
+  height: 440px;
+  background:
+    linear-gradient(90deg, rgba(117, 222, 207, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(117, 222, 207, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(18, 30, 46, 0.98), rgba(7, 11, 18, 1)) !important;
+  background-size: 10% 100%, 100% 16%, auto !important;
+}
+
+body.interfaz-union-standalone .iu-topdown-shell,
+body.interfaz-union-standalone .iu-top-map {
+  flex: 0 0 auto;
+}
+
+body.interfaz-union-standalone .iu-topdown-shell {
+  min-width: 720px;
+}
+
+.iu-2d-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.iu-2d-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+}
+
+.iu-top-map-wall {
+  border: 1px solid rgba(117, 222, 207, 0.35);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(117, 222, 207, 0.14), rgba(255, 255, 255, 0.03));
+  box-shadow: inset 0 0 18px rgba(117, 222, 207, 0.08);
+}
+
+.iu-top-map-aisle {
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.iu-top-static,
+.iu-top-dynamic {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.iu-top-static {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.iu-top-dynamic {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.iu-top-map-label {
+  position: absolute;
+  left: 20px;
+  font-size: 11px;
+  color: rgba(244, 247, 251, 0.72);
+  pointer-events: none;
+}
+
+.iu-top-map-label-top {
+  top: 18px;
+}
+
+.iu-top-map-label-bottom {
+  bottom: 18px;
+}
+
+.iu-top-map-label-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(244, 247, 251, 0.42);
+ }
 
 .iu-action-panel {
   display: grid;
@@ -270,7 +479,7 @@ body.interfaz-union-standalone input:focus-visible {
 
 @media (max-width: 1180px) {
   body.interfaz-union-standalone .w-\[380px\] {
-    width: 320px !important;
+    width: 480px !important;
   }
 
   body.interfaz-union-standalone .w-80 {
@@ -279,5 +488,17 @@ body.interfaz-union-standalone input:focus-visible {
 
   .iu-wall-guide {
     grid-template-columns: 1fr;
+  }
+
+  .iu-room-presets,
+  .iu-room-fields,
+  .iu-room-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1181px) {
+  body.interfaz-union-standalone .w-\[380px\] {
+    width: 560px !important;
   }
 }
